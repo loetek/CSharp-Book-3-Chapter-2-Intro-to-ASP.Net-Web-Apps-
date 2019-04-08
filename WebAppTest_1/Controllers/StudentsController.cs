@@ -102,9 +102,29 @@ namespace WebAppTest_1.Controllers
         }
 
         //        //GET: Students / Create
-        public ActionResult Create()
+        public ActionResult Create([FromBody] Student newStudent)
         {
-            return View();
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"INSERT INTO student (firstname, lastname, slackhandle, cohortid)
+                                             OUTPUT INSERTED.Id
+                                             VALUES (@firstname, @lastname, @slackhandle, @cohortid)";
+                        cmd.Parameters.Add(new SqlParameter("@firstname", newStudent.FirstName));
+                        cmd.Parameters.Add(new SqlParameter("@lastname", newStudent.LastName));
+                        cmd.Parameters.Add(new SqlParameter("@slackhandle", newStudent.SlackHandle));
+                        cmd.Parameters.Add(new SqlParameter("@cohortid", newStudent.CohortId));
+
+                        int newId = (int)cmd.ExecuteScalar();
+                        newStudent.Id = newId;
+                        //return CreatedAtRoute("GetSingleStudent", new { id = newId }, newStudent);
+                    }
+                }
+            }
+            return View(newStudent);
         }
 
         // POST: Students/Create
@@ -150,7 +170,18 @@ namespace WebAppTest_1.Controllers
         // GET: Students/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "DELETE FROM instructor WHERE id = @id;";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    cmd.ExecuteNonQuery();
+                    return View();
+                }
+            }
         }
 
         // POST: Students/Delete/5
